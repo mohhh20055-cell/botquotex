@@ -1,0 +1,4 @@
+# pyproject.toml - ملف فارغ لتعطيل Poetry
+[build-system]
+requires = ["setuptools>=40.8.0"]
+build-backend = "setuptools.build_meta"
