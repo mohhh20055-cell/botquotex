@@ -1,3 +1,15 @@
+import sys
+import os
+
+# حذف المجلد الحالي والمجلدات الفرعية من مسارات البحث الأولى لبايثون مؤقتاً
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir in sys.path:
+    sys.path.remove(current_dir)
+if '' in sys.path:
+    sys.path.remove('')
+
+# إعادة إضافة مسار المشروع في نهاية القائمة ليعمل كمسار فرعي لا يتعارض مع بايثون
+sys.path.append(current_dir)
 from flask import Flask, render_template, request, jsonify, session
 from botquotex.quotexapi.stable_api import Quotex
 import asyncio
