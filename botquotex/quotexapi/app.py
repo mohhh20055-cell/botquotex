@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session
-from quotexapi import Quotex
+from botquotex.quotexapi.stable_api import Quotex
 import asyncio
 import os
 import json
