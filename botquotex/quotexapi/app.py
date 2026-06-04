@@ -1,22 +1,26 @@
 import sys
 import os
 
-# حذف المجلد الحالي والمجلدات الفرعية من مسارات البحث الأولى لبايثون مؤقتاً
+# ✅ الحل الصحيح: إضافة مسار المشروع فقط دون حذف المسارات الأساسية
 current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir in sys.path:
-    sys.path.remove(current_dir)
-if '' in sys.path:
-    sys.path.remove('')
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
-# إعادة إضافة مسار المشروع في نهاية القائمة ليعمل كمسار فرعي لا يتعارض مع بايثون
-sys.path.append(current_dir)
+# ✅ استيراد المكتبات بعد ضبط المسار
 from flask import Flask, render_template, request, jsonify, session
-from botquotex.quotexapi.stable_api import Quotex
+
+# ✅ استيراد Quotex بشكل صحيح (لاحظ تغيير المسار)
+try:
+    from quotexapi.api import Quotex
+except ImportError:
+    try:
+        from quotexapi.stable_api import Quotex
+    except ImportError:
+        from quotexapi import Quotex
+
 import asyncio
-import os
 import json
 import threading
-import time
 from datetime import datetime
 
 app = Flask(__name__)
@@ -61,34 +65,26 @@ class QuotexBot:
         """الحصول على الأصول المتاحة"""
         if self.client:
             assets = await self.client.get_all_assets()
-            return list(assets.keys())[:50]  # أول 50 زوج
+            return list(assets.keys())[:50]
         return []
     
     async def analyze_market(self, asset, duration=60):
         """تحليل السوق باستخدام المؤشرات"""
         try:
-            # جلب بيانات الشموع
             candles = await self.client.get_candles(asset, None, duration * 30, duration)
             
             if not candles or len(candles) < 20:
                 return {"signal": "neutral", "reason": "بيانات غير كافية"}
             
-            # استخراج الأسعار
             prices = [float(c["close"]) for c in candles]
-            
-            # حساب RSI بسيط
             rsi = self.calculate_rsi(prices)
             
-            # حساب المتوسطات المتحركة
             sma_fast = sum(prices[-10:]) / 10 if len(prices) >= 10 else prices[-1]
             sma_slow = sum(prices[-20:]) / 20 if len(prices) >= 20 else prices[-1]
             
             current_price = prices[-1]
-            
-            # تحليل الاتجاه
             trend = "UP" if sma_fast > sma_slow else "DOWN"
             
-            # اتخاذ القرار
             signal = "neutral"
             reason = ""
             
@@ -168,7 +164,6 @@ class QuotexBot:
             }
             
             if success:
-                # انتظار النتيجة
                 await asyncio.sleep(duration + 2)
                 win = await self.client.check_win(result)
                 trade_record["result"] = "win" if win else "loss"
@@ -191,7 +186,6 @@ class QuotexBot:
         results = []
         
         while self.is_running and trades_done < max_trades:
-            # تحليل السوق
             analysis = await self.analyze_market(asset, duration)
             
             if analysis["signal"] != "neutral":
@@ -205,11 +199,8 @@ class QuotexBot:
                     "time": datetime.now().isoformat()
                 })
                 trades_done += 1
-                
-                # انتظار بين الصفقات
                 await asyncio.sleep(120)
             else:
-                # انتظار 30 ثانية ثم إعادة التحليل
                 await asyncio.sleep(30)
         
         self.is_running = False
@@ -223,34 +214,33 @@ class QuotexBot:
 
 def run_async(coro):
     """تشغيل دوال غير متزامنة"""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
     return loop.run_until_complete(coro)
 
 
 @app.route('/')
 def index():
-    """الصفحة الرئيسية"""
     return render_template('dashboard.html')
 
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    """تسجيل الدخول إلى Quotex"""
     data = request.json
     email = data.get('email')
     password = data.get('password')
-    mode = data.get('mode', 'PRACTICE')  # PRACTICE أو REAL
+    mode = data.get('mode', 'PRACTICE')
     
     if not email or not password:
         return jsonify({"success": False, "error": "البريد الإلكتروني وكلمة المرور مطلوبان"})
     
-    # إنشاء بوت جديد
     bot = QuotexBot(email, password, mode)
     success, message = run_async(bot.connect())
     
     if success:
-        # تخزين البوت في الجلسة
         session['user_email'] = email
         bots[email] = bot
         return jsonify({"success": True, "message": message})
@@ -260,7 +250,6 @@ def login():
 
 @app.route('/api/assets', methods=['GET'])
 def get_assets():
-    """الحصول على قائمة الأصول المتاحة"""
     email = session.get('user_email')
     if not email or email not in bots:
         return jsonify({"success": False, "error": "الرجاء تسجيل الدخول أولاً"})
@@ -272,7 +261,6 @@ def get_assets():
 
 @app.route('/api/balance', methods=['GET'])
 def get_balance():
-    """الحصول على الرصيد"""
     email = session.get('user_email')
     if not email or email not in bots:
         return jsonify({"success": False, "error": "الرجاء تسجيل الدخول أولاً"})
@@ -284,7 +272,6 @@ def get_balance():
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
-    """تحليل السوق لزوج معين"""
     email = session.get('user_email')
     if not email or email not in bots:
         return jsonify({"success": False, "error": "الرجاء تسجيل الدخول أولاً"})
@@ -301,7 +288,6 @@ def analyze():
 
 @app.route('/api/trade', methods=['POST'])
 def trade():
-    """تنفيذ صفقة يدوية"""
     email = session.get('user_email')
     if not email or email not in bots:
         return jsonify({"success": False, "error": "الرجاء تسجيل الدخول أولاً"})
@@ -309,21 +295,20 @@ def trade():
     data = request.json
     asset = data.get('asset')
     amount = float(data.get('amount', 10))
-    direction = data.get('direction')  # call أو put
+    direction = data.get('direction')
     duration = int(data.get('duration', 60))
     
     if not asset or not direction:
         return jsonify({"success": False, "error": "بيانات غير مكتملة"})
     
     bot = bots[email]
-    success, trade = run_async(bot.execute_trade(asset, amount, direction, duration))
+    success, trade_result = run_async(bot.execute_trade(asset, amount, direction, duration))
     
-    return jsonify({"success": success, "trade": trade})
+    return jsonify({"success": success, "trade": trade_result})
 
 
 @app.route('/api/auto_trade', methods=['POST'])
 def auto_trade():
-    """بدء التداول التلقائي"""
     email = session.get('user_email')
     if not email or email not in bots:
         return jsonify({"success": False, "error": "الرجاء تسجيل الدخول أولاً"})
@@ -336,12 +321,11 @@ def auto_trade():
     
     bot = bots[email]
     
-    # تشغيل التداول التلقائي في خلفية منفصلة
     def run_auto():
-        results = run_async(bot.auto_trade(asset, amount, duration, max_trades))
-        # تخزين النتائج (يمكن إضافتها لاحقاً)
+        run_async(bot.auto_trade(asset, amount, duration, max_trades))
     
     thread = threading.Thread(target=run_auto)
+    thread.daemon = True
     thread.start()
     
     return jsonify({
@@ -352,7 +336,6 @@ def auto_trade():
 
 @app.route('/api/stop', methods=['POST'])
 def stop_trade():
-    """إيقاف التداول التلقائي"""
     email = session.get('user_email')
     if not email or email not in bots:
         return jsonify({"success": False, "error": "الرجاء تسجيل الدخول أولاً"})
@@ -365,7 +348,6 @@ def stop_trade():
 
 @app.route('/api/history', methods=['GET'])
 def get_history():
-    """الحصول على سجل الصفقات"""
     email = session.get('user_email')
     if not email or email not in bots:
         return jsonify({"success": False, "error": "الرجاء تسجيل الدخول أولاً"})
