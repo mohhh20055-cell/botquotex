@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوت التداول الآلي - Quotex</title>
+    <title>بوت Quotex - تداول آلي</title>
     <style>
         * {
             margin: 0;
@@ -13,14 +13,22 @@
         
         body {
             font-family: 'Tahoma', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             min-height: 100vh;
             padding: 20px;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         
         .header {
@@ -34,72 +42,37 @@
             margin-bottom: 10px;
         }
         
-        .status-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .stat-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .control-panel {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
             color: #333;
         }
         
         input, select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
             font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2a5298;
         }
         
         button {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             padding: 12px 30px;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
             margin: 5px;
@@ -107,259 +80,424 @@
         }
         
         button:hover {
-            background: #764ba2;
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         
         button.danger {
-            background: #dc3545;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
         
         button.success {
-            background: #28a745;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .analysis-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .signal-call {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .signal-put {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .signal-neutral {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .balance {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2a5298;
         }
         
         .trade-history {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
             max-height: 400px;
             overflow-y: auto;
         }
         
         .trade-item {
             border-bottom: 1px solid #eee;
-            padding: 10px;
-            margin-bottom: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
         }
         
-        .trade-call {
+        .trade-win {
+            background: #d4edda;
             border-right: 4px solid #28a745;
         }
         
-        .trade-put {
+        .trade-loss {
+            background: #f8d7da;
             border-right: 4px solid #dc3545;
         }
         
-        .status-badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .status-running {
-            background: #28a745;
-            color: white;
-        }
-        
-        .status-stopped {
-            background: #dc3545;
-            color: white;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
         .loading {
-            animation: pulse 1s infinite;
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 بوت التداول الآلي - Quotex</h1>
-            <p>تداول ذكي باستخدام الذكاء الاصطناعي والمؤشرات الفنية</p>
+            <h1>🤖 بوت Quotex - التداول الآلي</h1>
+            <p>تحليل ذكي | تنفيذ فوري | أرباح آلية</p>
         </div>
         
-        <div class="status-card">
-            <h3>📊 حالة البوت</h3>
-            <div id="botStatus">
-                <span class="status-badge status-stopped">متوقف</span>
-            </div>
-            <div class="stats-grid" id="stats">
-                <div class="stat-box">
-                    <div class="stat-label">إجمالي الصفقات</div>
-                    <div class="stat-value" id="totalTrades">0</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">الصفقات الرابحة</div>
-                    <div class="stat-value" id="wins">0</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">الصفقات الخاسرة</div>
-                    <div class="stat-value" id="losses">0</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">نسبة الربح</div>
-                    <div class="stat-value" id="winRate">0%</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">إجمالي الربح</div>
-                    <div class="stat-value" id="profit">$0</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">الرصيد الحالي</div>
-                    <div class="stat-value" id="balance">$0</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="control-panel">
-            <h3>⚙️ إعدادات التداول</h3>
-            <form id="botConfig">
+        <!-- قسم تسجيل الدخول -->
+        <div class="card" id="loginSection">
+            <h2>🔐 تسجيل الدخول إلى حساب Quotex</h2>
+            <form id="loginForm">
                 <div class="form-group">
-                    <label>زوج العملات</label>
-                    <select id="asset">
-                        <option value="EURUSD">EUR/USD</option>
-                        <option value="GBPUSD">GBP/USD</option>
-                        <option value="USDJPY">USD/JPY</option>
-                        <option value="BTCUSD">BTC/USD</option>
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="email" required placeholder="example@email.com">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-group">
+                    <label>نوع الحساب</label>
+                    <select id="mode">
+                        <option value="PRACTICE">📊 حساب تجريبي (ديمو)</option>
+                        <option value="REAL">💰 حساب حقيقي (تداول بأموال حقيقية)</option>
                     </select>
                 </div>
-                
-                <div class="form-group">
-                    <label>مبلغ الصفقة ($)</label>
-                    <input type="number" id="amount" value="10" min="1" step="1">
-                </div>
-                
-                <div class="form-group">
-                    <label>مدة الصفقة (ثانية)</label>
-                    <select id="duration">
-                        <option value="60">دقيقة</option>
-                        <option value="300">5 دقائق</option>
-                        <option value="900">15 دقيقة</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>الاستراتيجية</label>
-                    <select id="strategy">
-                        <option value="combined">استراتيجية مدمجة (موصى بها)</option>
-                        <option value="rsi">استراتيجية RSI</option>
-                        <option value="macd">استراتيجية MACD</option>
-                        <option value="bollinger">استراتيجية Bollinger</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>وضع الحساب</label>
-                    <select id="demoMode">
-                        <option value="true">حساب تجريبي (ديمو)</option>
-                        <option value="false">حساب حقيقي ⚠️</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>عدد الصفقات (0 = غير محدود)</label>
-                    <input type="number" id="maxTrades" value="10" min="0">
-                </div>
-                
-                <div style="text-align: center;">
-                    <button type="button" class="success" onclick="startBot()">▶️ تشغيل البوت</button>
-                    <button type="button" class="danger" onclick="stopBot()">⏹️ إيقاف البوت</button>
-                    <button type="button" onclick="refreshStatus()">🔄 تحديث الحالة</button>
-                </div>
+                <button type="submit" class="success">🚀 تسجيل الدخول</button>
             </form>
         </div>
         
-        <div class="trade-history">
-            <h3>📜 سجل الصفقات</h3>
-            <div id="tradeHistory">
-                <p style="color: #999; text-align: center;">لا توجد صفقات بعد</p>
+        <!-- قسم التداول (يظهر بعد تسجيل الدخول) -->
+        <div id="tradingSection" style="display: none;">
+            <!-- الرصيد -->
+            <div class="card">
+                <h2>💰 الرصيد الحالي</h2>
+                <div class="balance" id="balance">-</div>
+                <button onclick="refreshBalance()" style="margin-top: 10px;">🔄 تحديث الرصيد</button>
+            </div>
+            
+            <div class="grid-2">
+                <!-- تحليل السوق -->
+                <div class="card">
+                    <h2>📊 تحليل السوق</h2>
+                    <div class="form-group">
+                        <label>زوج العملات</label>
+                        <select id="asset">
+                            <option value="">اختر زوج عملات...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>مدة الشمعة (ثانية)</label>
+                        <select id="duration">
+                            <option value="60">1 دقيقة</option>
+                            <option value="300">5 دقائق</option>
+                            <option value="900">15 دقيقة</option>
+                        </select>
+                    </div>
+                    <button onclick="analyzeMarket()">🔍 تحليل السوق الآن</button>
+                    
+                    <div id="analysisResult" class="analysis-box" style="display: none;">
+                        <h3>نتيجة التحليل:</h3>
+                        <div id="analysisContent"></div>
+                    </div>
+                </div>
+                
+                <!-- تنفيذ الصفقات -->
+                <div class="card">
+                    <h2>⚡ تنفيذ صفقة</h2>
+                    <div class="form-group">
+                        <label>مبلغ الصفقة ($)</label>
+                        <input type="number" id="tradeAmount" value="10" min="1" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>اتجاه الصفقة</label>
+                        <select id="direction">
+                            <option value="call">📈 شراء (Call) - توقع ارتفاع</option>
+                            <option value="put">📉 بيع (Put) - توقع هبوط</option>
+                        </select>
+                    </div>
+                    <button onclick="executeTrade()" class="success">💸 تنفيذ صفقة يدوية</button>
+                    
+                    <hr style="margin: 20px 0;">
+                    
+                    <h3>🤖 التداول التلقائي</h3>
+                    <div class="form-group">
+                        <label>عدد الصفقات التلقائية</label>
+                        <input type="number" id="maxTrades" value="5" min="1" max="20">
+                    </div>
+                    <button onclick="startAutoTrade()">🎯 بدء التداول التلقائي</button>
+                    <button onclick="stopAutoTrade()" class="danger">⏹️ إيقاف التداول</button>
+                </div>
+            </div>
+            
+            <!-- سجل الصفقات -->
+            <div class="card">
+                <h2>📜 سجل الصفقات</h2>
+                <div id="tradeHistory" class="trade-history">
+                    <p style="color: #999; text-align: center;">لا توجد صفقات بعد</p>
+                </div>
+                <button onclick="refreshHistory()" style="margin-top: 10px;">🔄 تحديث السجل</button>
             </div>
         </div>
     </div>
     
     <script>
-        let updateInterval;
+        let isLoggedIn = false;
         
-        function startBot() {
-            const config = {
-                asset: document.getElementById('asset').value,
-                amount: parseFloat(document.getElementById('amount').value),
-                duration: parseInt(document.getElementById('duration').value),
-                strategy: document.getElementById('strategy').value,
-                demo_mode: document.getElementById('demoMode').value === 'true',
-                max_trades: parseInt(document.getElementById('maxTrades').value)
-            };
+        // تسجيل الدخول
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            fetch('/api/start', {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const mode = document.getElementById('mode').value;
+            
+            showLoading('loginForm');
+            
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(config)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert('خطأ: ' + data.error);
-                } else {
-                    alert('✅ ' + data.message);
-                    refreshStatus();
-                    startAutoRefresh();
-                }
-            })
-            .catch(error => {
-                alert('خطأ في الاتصال: ' + error);
-            });
-        }
-        
-        function stopBot() {
-            fetch('/api/stop', {method: 'POST'})
-            .then(response => response.json())
-            .then(data => {
-                alert('⏹️ ' + data.message);
-                refreshStatus();
-            });
-        }
-        
-        function refreshStatus() {
-            fetch('/api/status')
-            .then(response => response.json())
-            .then(data => {
-                if (data.connected) {
-                    const stats = data.statistics;
-                    document.getElementById('totalTrades').innerText = stats.total_trades || 0;
-                    document.getElementById('wins').innerText = stats.wins || 0;
-                    document.getElementById('losses').innerText = stats.losses || 0;
-                    document.getElementById('winRate').innerText = (stats.win_rate || 0).toFixed(1) + '%';
-                    document.getElementById('profit').innerText = '$' + (stats.profit || 0).toFixed(2);
-                    document.getElementById('balance').innerText = '$' + (stats.current_balance || 0).toFixed(2);
-                    
-                    const statusBadge = document.getElementById('botStatus');
-                    if (data.running) {
-                        statusBadge.innerHTML = '<span class="status-badge status-running">🟢 يعمل</span>';
-                    } else {
-                        statusBadge.innerHTML = '<span class="status-badge status-stopped">🔴 متوقف</span>';
-                    }
-                } else {
-                    document.getElementById('botStatus').innerHTML = '<span class="status-badge status-stopped">❌ غير متصل</span>';
-                }
+                body: JSON.stringify({email, password, mode})
             });
             
-            // جلب الرصيد
-            fetch('/api/balance')
-            .then(response => response.json())
-            .then(data => {
-                if (data.balance !== undefined) {
-                    document.getElementById('balance').innerText = '$' + data.balance.toFixed(2);
-                }
+            const data = await response.json();
+            hideLoading('loginForm');
+            
+            if (data.success) {
+                alert('✅ ' + data.message);
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('tradingSection').style.display = 'block';
+                isLoggedIn = true;
+                loadAssets();
+                refreshBalance();
+                refreshHistory();
+            } else {
+                alert('❌ خطأ: ' + data.error);
+            }
+        });
+        
+        // تحميل الأصول المتاحة
+        async function loadAssets() {
+            const response = await fetch('/api/assets');
+            const data = await response.json();
+            
+            if (data.success) {
+                const select = document.getElementById('asset');
+                select.innerHTML = '<option value="">اختر زوج عملات...</option>';
+                data.assets.forEach(asset => {
+                    select.innerHTML += `<option value="${asset}">${asset}</option>`;
+                });
+            }
+        }
+        
+        // تحليل السوق
+        async function analyzeMarket() {
+            const asset = document.getElementById('asset').value;
+            const duration = document.getElementById('duration').value;
+            
+            if (!asset) {
+                alert('الرجاء اختيار زوج عملات');
+                return;
+            }
+            
+            showLoading('analyzeMarket');
+            
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({asset, duration})
             });
+            
+            const data = await response.json();
+            hideLoading('analyzeMarket');
+            
+            if (data.success) {
+                const analysis = data.analysis;
+                const signalClass = analysis.signal === 'call' ? 'signal-call' : 
+                                   (analysis.signal === 'put' ? 'signal-put' : 'signal-neutral');
+                
+                document.getElementById('analysisResult').style.display = 'block';
+                document.getElementById('analysisContent').innerHTML = `
+                    <p><strong>📈 الإشارة:</strong> <span class="${signalClass}">${analysis.signal === 'call' ? 'شراء (Call) 🔼' : analysis.signal === 'put' ? 'بيع (Put) 🔽' : 'محايد ⏸️'}</span></p>
+                    <p><strong>💡 السبب:</strong> ${analysis.reason}</p>
+                    <p><strong>📊 مؤشر RSI:</strong> ${analysis.rsi}</p>
+                    <p><strong>💰 السعر الحالي:</strong> ${analysis.current_price}</p>
+                    <p><strong>📈 الاتجاه:</strong> ${analysis.trend === 'UP' ? 'صاعد ▲' : 'هابط ▼'}</p>
+                    <p><strong>📊 المتوسط السريع:</strong> ${analysis.sma_fast}</p>
+                    <p><strong>📊 المتوسط البطيء:</strong> ${analysis.sma_slow}</p>
+                `;
+                
+                // إذا كانت الإشارة قوية، عرض اقتراح
+                if (analysis.signal !== 'neutral') {
+                    document.getElementById('analysisContent').innerHTML += `
+                        <hr>
+                        <p style="color: green;">✅ اقتراح: قم بتنفيذ صفقة ${analysis.signal === 'call' ? 'شراء' : 'بيع'} الآن!</p>
+                        <button onclick="setDirection('${analysis.signal}')">🎯 تنفيذ ${analysis.signal === 'call' ? 'شراء' : 'بيع'}</button>
+                    `;
+                }
+            } else {
+                alert('خطأ في التحليل: ' + data.error);
+            }
         }
         
-        function startAutoRefresh() {
-            if (updateInterval) clearInterval(updateInterval);
-            updateInterval = setInterval(refreshStatus, 3000);
+        function setDirection(direction) {
+            document.getElementById('direction').value = direction;
+            executeTrade();
         }
         
-        // تحديث أولي
-        refreshStatus();
-        startAutoRefresh();
+        // تنفيذ صفقة يدوية
+        async function executeTrade() {
+            const asset = document.getElementById('asset').value;
+            const amount = document.getElementById('tradeAmount').value;
+            const direction = document.getElementById('direction').value;
+            const duration = document.getElementById('duration').value;
+            
+            if (!asset) {
+                alert('الرجاء اختيار زوج عملات');
+                return;
+            }
+            
+            showLoading('executeTrade');
+            
+            const response = await fetch('/api/trade', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({asset, amount: parseFloat(amount), direction, duration: parseInt(duration)})
+            });
+            
+            const data = await response.json();
+            hideLoading('executeTrade');
+            
+            if (data.success) {
+                alert(`✅ تم تنفيذ الصفقة بنجاح!\nالنتيجة: ${data.trade.result === 'win' ? 'رابحة 🎉' : 'خاسرة 📉'}\nالربح: $${data.trade.profit || 0}`);
+                refreshBalance();
+                refreshHistory();
+            } else {
+                alert('❌ فشل تنفيذ الصفقة: ' + (data.trade?.error || 'خطأ غير معروف'));
+            }
+        }
+        
+        // بدء التداول التلقائي
+        async function startAutoTrade() {
+            const asset = document.getElementById('asset').value;
+            const amount = document.getElementById('tradeAmount').value;
+            const duration = document.getElementById('duration').value;
+            const maxTrades = document.getElementById('maxTrades').value;
+            
+            if (!asset) {
+                alert('الرجاء اختيار زوج عملات');
+                return;
+            }
+            
+            const response = await fetch('/api/auto_trade', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({asset, amount: parseFloat(amount), duration: parseInt(duration), max_trades: parseInt(maxTrades)})
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('✅ ' + data.message);
+                // تحديث السجل والرصيد كل 30 ثانية
+                const interval = setInterval(() => {
+                    refreshBalance();
+                    refreshHistory();
+                }, 30000);
+            } else {
+                alert('❌ خطأ: ' + data.error);
+            }
+        }
+        
+        // إيقاف التداول
+        async function stopAutoTrade() {
+            const response = await fetch('/api/stop', {method: 'POST'});
+            const data = await response.json();
+            alert(data.message);
+        }
+        
+        // تحديث الرصيد
+        async function refreshBalance() {
+            const response = await fetch('/api/balance');
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('balance').innerHTML = `$${data.balance.toFixed(2)}`;
+            }
+        }
+        
+        // تحديث سجل الصفقات
+        async function refreshHistory() {
+            const response = await fetch('/api/history');
+            const data = await response.json();
+            
+            if (data.success && data.history.length > 0) {
+                const historyDiv = document.getElementById('tradeHistory');
+                historyDiv.innerHTML = data.history.map(trade => `
+                    <div class="trade-item ${trade.result === 'win' ? 'trade-win' : 'trade-loss'}">
+                        <strong>${trade.asset}</strong> - ${trade.direction === 'call' ? '📈 شراء' : '📉 بيع'}<br>
+                        المبلغ: $${trade.amount} | المدة: ${trade.duration} ثانية<br>
+                        النتيجة: ${trade.result === 'win' ? '✅ رابحة' : '❌ خاسرة'} | الربح: $${(trade.profit || 0).toFixed(2)}<br>
+                        <small>${new Date(trade.time).toLocaleString('ar-EG')}</small>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // دوال مساعدة
+        function showLoading(action) {
+            const btn = event?.target;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading"></span> جاري التنفيذ...';
+            }
+        }
+        
+        function hideLoading(action) {
+            const btn = event?.target;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = btn.getAttribute('data-original-text') || btn.innerText;
+            }
+        }
+        
+        // تحديث تلقائي للرصيد كل دقيقة
+        if (isLoggedIn) {
+            setInterval(refreshBalance, 60000);
+        }
     </script>
 </body>
 </html>
