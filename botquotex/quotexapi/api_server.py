@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Volcano Bot API Server
-API Server للتواصل مع Headless Bot على Render
+Volcano Bot API Server - لوحة تحكم كاملة للبوت
 """
 
 import os
@@ -24,9 +23,12 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-# HTML Template للواجهة
-HTML_TEMPLATE = '''
-<!DOCTYPE html>
+# Global variables
+logs = {"time": datetime.now().strftime("%H:%M:%S"), "message": "Volcano Bot Ready!"}
+
+
+# HTML Template للواجهة الكاملة
+HTML_TEMPLATE = '''<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -34,270 +36,302 @@ HTML_TEMPLATE = '''
     <title>Volcano Bot - لوحة التحكم</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             min-height: 100vh;
             color: #fff;
             padding: 20px;
         }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { text-align: center; color: #ff6b6b; font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 0 30px rgba(255,107,107,0.5); }
+        .subtitle { text-align: center; color: #aaa; margin-bottom: 30px; }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        h1 {
-            text-align: center;
-            color: #e94560;
-            font-size: 2.5em;
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
             margin-bottom: 30px;
-            text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+            flex-wrap: wrap;
         }
-        
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+        .status-item { text-align: center; }
+        .status-dot {
+            width: 15px; height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: blink 1.5s infinite;
         }
+        .status-dot.green { background: #00ff88; box-shadow: 0 0 15px #00ff88; }
+        .status-dot.red { background: #ff4444; box-shadow: 0 0 15px #ff4444; }
+        .status-dot.yellow { background: #ffdd00; box-shadow: 0 0 15px #ffdd00; }
+        .status-dot.orange { background: #ff9500; box-shadow: 0 0 15px #ff9500; }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
         
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
         .card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border-radius: 20px;
             padding: 25px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
-        
         .card h2 {
-            color: #e94560;
+            color: #ff6b6b;
             margin-bottom: 20px;
-            font-size: 1.3em;
-            border-bottom: 2px solid #e94560;
-            padding-bottom: 10px;
-        }
-        
-        .status-indicator {
+            font-size: 1.2em;
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 15px;
+            border-bottom: 2px solid rgba(255,107,107,0.3);
+            padding-bottom: 10px;
         }
-        
-        .status-dot {
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        
-        .status-dot.connected { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
-        .status-dot.disconnected { background: #ff4444; box-shadow: 0 0 10px #ff4444; }
-        .status-dot.trading { background: #ffff00; box-shadow: 0 0 10px #ffff00; }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .stat {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .stat-label { color: #aaa; }
-        .stat-value { font-weight: bold; color: #e94560; }
         
         .btn {
-            display: inline-block;
             padding: 12px 25px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 1em;
             cursor: pointer;
             transition: all 0.3s;
-            margin: 5px;
+            font-weight: bold;
         }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(255,107,107,0.4); }
         
-        .btn-success {
-            background: linear-gradient(135deg, #00b894, #00cec9);
-            color: white;
-        }
+        .btn-connect { background: linear-gradient(135deg, #00ff88, #00b894); color: #000; width: 100%; }
+        .btn-disconnect { background: linear-gradient(135deg, #ff4444, #ff6b6b); color: #fff; width: 100%; }
+        .btn-start { background: linear-gradient(135deg, #00b4d8, #0077b6); color: #fff; }
+        .btn-stop { background: linear-gradient(135deg, #ff9500, #ff6b6b); color: #fff; }
+        .btn-enable { background: linear-gradient(135deg, #00ff88, #00b894); color: #000; }
+        .btn-disable { background: linear-gradient(135deg, #ff4444, #ff6b6b); color: #fff; }
         
-        .btn-danger {
-            background: linear-gradient(135deg, #e94560, #ff6b6b);
-            color: white;
-        }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
         
-        .btn-warning {
-            background: linear-gradient(135deg, #fdcb6e, #f39c12);
-            color: #333;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
-        }
-        
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .button-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        
-        .signal-form {
-            display: grid;
-            gap: 15px;
-        }
-        
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        
-        .form-group label {
-            color: #aaa;
-            font-size: 0.9em;
-        }
-        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group.full { grid-column: span 2; }
+        .form-group label { color: #aaa; font-size: 0.9em; }
         .form-group input, .form-group select {
             padding: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
             font-size: 1em;
         }
-        
         .form-group input:focus, .form-group select:focus {
             outline: none;
-            border-color: #e94560;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 10px rgba(255,107,107,0.3);
         }
         
-        .log-container {
-            background: rgba(0, 0, 0, 0.3);
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-box {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-box .label { color: #888; font-size: 0.85em; }
+        .stat-box .value { font-size: 1.5em; font-weight: bold; color: #fff; margin-top: 5px; }
+        .stat-box .value.green { color: #00ff88; }
+        .stat-box .value.red { color: #ff4444; }
+        .stat-box .value.blue { color: #00b4d8; }
+        .stat-box .value.orange { color: #ff9500; }
+        
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00b894);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        
+        .log-box {
+            background: rgba(0,0,0,0.4);
             border-radius: 10px;
             padding: 15px;
             max-height: 300px;
             overflow-y: auto;
-            font-family: monospace;
+            font-family: 'Consolas', monospace;
             font-size: 0.85em;
+            direction: ltr;
+            text-align: left;
         }
+        .log-entry { padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .log-time { color: #666; }
+        .log-win { color: #00ff88; }
+        .log-loss { color: #ff4444; }
+        .log-signal { color: #00b4d8; }
+        .log-error { color: #ff9500; }
+        .log-info { color: #888; }
         
-        .log-entry {
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .log-time { color: #666; margin-left: 10px; }
-        .log-success { color: #00ff88; }
-        .log-error { color: #ff4444; }
-        .log-info { color: #00b4d8; }
-        
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding: 20px;
-            color: #666;
-        }
-        
-        .refresh-info {
-            text-align: center;
-            color: #666;
-            margin-top: 10px;
-        }
-        
-        .win-rate-bar {
-            height: 20px;
-            background: rgba(255, 255, 255, 0.1);
+        .alert-box {
+            padding: 15px;
             border-radius: 10px;
-            overflow: hidden;
-            margin-top: 10px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        .alert-warning { background: rgba(255,149,0,0.2); border: 1px solid rgba(255,149,0,0.5); color: #ff9500; }
+        .alert-success { background: rgba(0,255,136,0.2); border: 1px solid rgba(0,255,136,0.5); color: #00ff88; }
+        
+        .signal-info {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            direction: ltr;
+            text-align: left;
+        }
+        .signal-info code {
+            color: #00ff88;
+            background: rgba(0,255,136,0.1);
+            padding: 2px 8px;
+            border-radius: 5px;
+            display: block;
+            margin-top: 5px;
         }
         
-        .win-rate-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00ff88, #00b894);
-            border-radius: 10px;
-            transition: width 0.5s ease;
+        .footer { text-align: center; margin-top: 30px; color: #666; padding: 20px; }
+        
+        .toggle-container { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+        .toggle { position: relative; width: 50px; height: 26px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 26px;
+            transition: 0.3s;
         }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px; width: 20px;
+            left: 3px; bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .toggle input:checked + .toggle-slider { background: #00ff88; }
+        .toggle input:checked + .toggle-slider:before { transform: translateX(24px); }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔥 Volcano Bot - لوحة التحكم</h1>
+        <h1>🔥 Volcano Profit Trading Bot</h1>
+        <p class="subtitle">Volcano Bot - لوحة تحكم التداول الآلي</p>
         
-        <div class="dashboard">
-            <!-- حالة البوت -->
-            <div class="card">
-                <h2>📊 حالة البوت</h2>
-                <div class="status-indicator">
-                    <div class="status-dot {{ 'connected' if status.connected else 'disconnected' }}"></div>
-                    <span>{{ 'متصل' if status.connected else 'غير متصل' }}</span>
-                </div>
-                
-                <div class="stat">
-                    <span class="stat-label">الحالة:</span>
-                    <span class="stat-value">{{ status.status }}</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">الرصيد:</span>
-                    <span class="stat-value">${{ "%.2f"|format(status.get('balance', 0)) }}</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">العمليات الرابحة:</span>
-                    <span class="stat-value">{{ status.get('win_count', 0) }}</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">العمليات الخاسرة:</span>
-                    <span class="stat-value">{{ status.get('loss_count', 0) }}</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">نسبة الربح:</span>
-                    <span class="stat-value">{{ "%.1f"|format((status.win_rate or 0) * 100) }}%</span>
-                </div>
-                
-                <div class="win-rate-bar">
-                    <div class="win-rate-fill" style="width: {{ (status.win_rate or 0) * 100 }}%"></div>
-                </div>
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-dot {{ 'green' if status.get('connected') else 'red' }}"></div>
+                <div>{{ 'متصل' if status.get('connected') else 'غير متصل' }}</div>
             </div>
-            
-            <!-- التحكم -->
-            <div class="card">
-                <h2>🎮 التحكم</h2>
-                <div class="button-group">
-                    <button class="btn btn-success" onclick="startBot()">▶️ تشغيل البوت</button>
-                    <button class="btn btn-danger" onclick="stopBot()">⏹️ إيقاف البوت</button>
-                </div>
-                <div class="button-group">
-                    <button class="btn btn-warning" onclick="enableTrading()">✅ تفعيل التداول</button>
-                    <button class="btn btn-warning" onclick="disableTrading()">🚫 إيقاف التداول</button>
-                </div>
-                <div class="refresh-info">
-                    <button class="btn btn-warning" onclick="refreshStatus()">🔄 تحديث الحالة</button>
-                </div>
+            <div class="status-item">
+                <div class="status-dot {{ 'green' if status.get('running') else 'red' }}"></div>
+                <div>{{ ' працює' if status.get('running') else 'متوقف' }}</div>
             </div>
-            
-            <!-- إرسال إشارة -->
+            <div class="status-item">
+                <div class="status-dot {{ 'yellow' if status.get('trading_enabled') else 'orange' }}"></div>
+                <div>{{ 'التداول مفعل' if status.get('trading_enabled') else 'التداول معطل' }}</div>
+            </div>
+            <div class="status-item">
+                <span style="font-size: 1.5em; font-weight: bold;">${{ "%.2f"|format(status.get('balance', 0)) }}</span>
+                <div>الرصيد</div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <!-- حساب Quotex -->
             <div class="card">
-                <h2>📨 إرسال إشارة</h2>
-                <form class="signal-form" onsubmit="sendSignal(event)">
+                <h2>👤 حساب Quotex</h2>
+                <form id="loginForm" onsubmit="saveLogin(event)">
                     <div class="form-group">
-                        <label>الأداة (Asset)</label>
-                        <select name="asset" id="asset">
+                        <label>📧 البريد الإلكتروني</label>
+                        <input type="email" id="email" value="{{ config.get('email', '') }}" placeholder="example@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>🔐 كلمة المرور</label>
+                        <input type="password" id="password" value="{{ config.get('password', '') }}" placeholder="••••••••">
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-connect">💾 حفظ البيانات</button>
+                    </div>
+                </form>
+                <div class="alert-box alert-warning">
+                    ⚠️ <b>الوضع التجريبي:</b> يعمل بحساب Demo افتراضي
+                </div>
+            </div>
+            
+            <!-- إعدادات التداول -->
+            <div class="card">
+                <h2>⚙️ إعدادات التداول</h2>
+                <form id="tradeForm" onsubmit="saveSettings(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>💰 أقل مبلغ</label>
+                            <input type="number" id="min_amount" value="{{ config.get('min_amount', 1) }}" min="1" max="100" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>💰 أعلى مبلغ</label>
+                            <input type="number" id="max_amount" value="{{ config.get('max_amount', 100) }}" min="1" max="1000" step="1">
+                        </div>
+                    </div>
+                    
+                    <div class="toggle-container">
+                        <span>🔄 تداول تلقائي</span>
+                        <label class="toggle">
+                            <input type="checkbox" id="auto_trade" {{ 'checked' if config.get('auto_trade') else '' }}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-connect">💾 حفظ الإعدادات</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- التحكم بالبوت -->
+            <div class="card">
+                <h2>🎮 التحكم بالبوت</h2>
+                <div class="btn-group">
+                    <button class="btn btn-start" onclick="startBot()">▶️ تشغيل البوت</button>
+                    <button class="btn btn-stop" onclick="stopBot()">⏹️ إيقاف</button>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-enable" onclick="enableTrading()">✅ تفعيل التداول</button>
+                    <button class="btn btn-disable" onclick="disableTrading()">🚫 إيقاف التداول</button>
+                </div>
+                
+                <div class="signal-info">
+                    <strong>📁 ملف الإشارات:</strong>
+                    <code>SignalsLog.txt</code>
+                    <small style="color: #888; display: block; margin-top: 10px;">
+                        MT4 يكتب الإشارات في هذا الملف والبوت يقرأها تلقائياً
+                    </small>
+                </div>
+            </div>
+            
+            <!-- إشارة يدوية -->
+            <div class="card">
+                <h2>📨 إشارة يدوية</h2>
+                <form onsubmit="sendSignal(event)">
+                    <div class="form-group">
+                        <label>📊 الأداة المالية</label>
+                        <select id="asset">
                             <option value="EUR/USD">EUR/USD</option>
                             <option value="GBP/USD">GBP/USD</option>
                             <option value="USD/JPY">USD/JPY</option>
@@ -305,35 +339,71 @@ HTML_TEMPLATE = '''
                             <option value="USD/CAD">USD/CAD</option>
                             <option value="GBP/JPY">GBP/JPY</option>
                             <option value="EUR/GBP">EUR/GBP</option>
+                            <option value="EUR/JPY">EUR/JPY</option>
                             <option value="BTC/USD">BTC/USD</option>
                             <option value="ETH/USD">ETH/USD</option>
+                            <option value="XAU/USD">XAU/USD (Gold)</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>الاتجاه (Direction)</label>
-                        <select name="direction" id="direction">
-                            <option value="CALL">📈 CALL (أعلى)</option>
-                            <option value="PUT">📉 PUT (أسفل)</option>
-                        </select>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>📈 الاتجاه</label>
+                            <select id="direction">
+                                <option value="CALL">📈 CALL (أعلى)</option>
+                                <option value="PUT">📉 PUT (أسفل)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>⏱️ المدة</label>
+                            <select id="duration">
+                                <option value="30">30 ثانية</option>
+                                <option value="60" selected>60 ثانية</option>
+                                <option value="120">2 دقيقة</option>
+                                <option value="180">3 دقيقة</option>
+                                <option value="300">5 دقيقة</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>المبلغ ($)</label>
-                        <input type="number" name="amount" id="amount" value="1" min="1" max="100" step="0.1">
+                        <label>💵 المبلغ ($)</label>
+                        <input type="number" id="amount" value="1" min="1" max="100" step="0.1">
                     </div>
-                    <div class="form-group">
-                        <label>المدة (ثانية)</label>
-                        <input type="number" name="duration" id="duration" value="60" min="30" max="300">
-                    </div>
-                    <button type="submit" class="btn btn-success" style="width: 100%">🚀 إرسال الإشارة</button>
+                    <button type="submit" class="btn btn-enable" style="width: 100%; margin-top: 10px;">🚀 تنفيذ الصفقة</button>
                 </form>
             </div>
             
-            <!-- السجل -->
+            <!-- الإحصائيات -->
             <div class="card">
-                <h2>📋 السجل</h2>
-                <div class="log-container" id="logContainer">
+                <h2>📊 إحصائيات التداول</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="label">العمليات الرابحة</div>
+                        <div class="value green">{{ status.get('win_count', 0) }}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">العمليات الخاسرة</div>
+                        <div class="value red">{{ status.get('loss_count', 0) }}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">نسبة الربح</div>
+                        <div class="value blue">{{ "%.1f"|format((status.get('win_rate', 0) or 0) * 100) }}%</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">إجمالي العمليات</div>
+                        <div class="value orange">{{ status.get('total_trades', 0) }}</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ (status.get('win_rate', 0) or 0) * 100 }}%"></div>
+                </div>
+            </div>
+            
+            <!-- سجل العمليات -->
+            <div class="card">
+                <h2>📋 سجل العمليات</h2>
+                <div class="log-box" id="logContainer">
                     <div class="log-entry">
-                        <span class="log-time">{{ logs.time }}</span>
+                        <span class="log-time">[{{ logs.time }}]</span>
                         <span class="log-info">{{ logs.message }}</span>
                     </div>
                 </div>
@@ -341,19 +411,70 @@ HTML_TEMPLATE = '''
         </div>
         
         <div class="footer">
-            <p>Volcano Bot API v1.0.0 | لوحة التحكم</p>
+            <p>Volcano Bot v1.0 | Trading Automation</p>
+            <p style="font-size: 0.8em; margin-top: 10px;">يتابع ملف SignalsLog.txt تلقائياً من MT4</p>
         </div>
     </div>
     
     <script>
+        function addLog(message, type = 'info') {
+            const container = document.getElementById('logContainer');
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = '<span class="log-time">[' + time + ']</span> <span class="log-' + type + '">' + message + '</span>';
+            container.insertBefore(entry, container.firstChild);
+            
+            while (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+        }
+        
+        async function saveLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                await fetch('/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                addLog('✅ تم حفظ بيانات الحساب', 'success');
+            } catch (e) {
+                addLog('❌ خطأ: ' + e.message, 'error');
+            }
+        }
+        
+        async function saveSettings(e) {
+            e.preventDefault();
+            const min_amount = parseFloat(document.getElementById('min_amount').value);
+            const max_amount = parseFloat(document.getElementById('max_amount').value);
+            const auto_trade = document.getElementById('auto_trade').checked;
+            
+            try {
+                await fetch('/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ min_amount, max_amount, auto_trade })
+                });
+                addLog('✅ تم حفظ إعدادات التداول', 'success');
+            } catch (e) {
+                addLog('❌ خطأ: ' + e.message, 'error');
+            }
+        }
+        
         async function startBot() {
             try {
                 const response = await fetch('/start', { method: 'POST' });
                 const data = await response.json();
-                addLog(data.status === 'success' ? 'تم تشغيل البوت بنجاح!' : 'خطأ: ' + data.message, data.status === 'success' ? 'success' : 'error');
-                refreshStatus();
+                addLog(data.status === 'success' ? '✅ تم تشغيل البوت' : '❌ ' + data.message, data.status === 'success' ? 'success' : 'error');
+                setTimeout(() => location.reload(), 1000);
             } catch (e) {
-                addLog('خطأ في الاتصال: ' + e.message, 'error');
+                addLog('❌ خطأ: ' + e.message, 'error');
             }
         }
         
@@ -361,10 +482,10 @@ HTML_TEMPLATE = '''
             try {
                 const response = await fetch('/stop', { method: 'POST' });
                 const data = await response.json();
-                addLog(data.status === 'success' ? 'تم إيقاف البوت!' : 'خطأ: ' + data.message, data.status === 'success' ? 'success' : 'error');
-                refreshStatus();
+                addLog(data.status === 'success' ? '⏹️ تم إيقاف البوت' : '❌ ' + data.message, data.status === 'success' ? 'success' : 'error');
+                setTimeout(() => location.reload(), 1000);
             } catch (e) {
-                addLog('خطأ في الاتصال: ' + e.message, 'error');
+                addLog('❌ خطأ: ' + e.message, 'error');
             }
         }
         
@@ -372,10 +493,10 @@ HTML_TEMPLATE = '''
             try {
                 const response = await fetch('/enable', { method: 'POST' });
                 const data = await response.json();
-                addLog(data.status === 'success' ? 'تم تفعيل التداول!' : 'خطأ: ' + data.message, data.status === 'success' ? 'success' : 'error');
-                refreshStatus();
+                addLog(data.status === 'success' ? '✅ تم تفعيل التداول' : '❌ ' + data.message, data.status === 'success' ? 'success' : 'error');
+                setTimeout(() => location.reload(), 500);
             } catch (e) {
-                addLog('خطأ في الاتصال: ' + e.message, 'error');
+                addLog('❌ خطأ: ' + e.message, 'error');
             }
         }
         
@@ -383,21 +504,20 @@ HTML_TEMPLATE = '''
             try {
                 const response = await fetch('/disable', { method: 'POST' });
                 const data = await response.json();
-                addLog(data.status === 'success' ? 'تم إيقاف التداول!' : 'خطأ: ' + data.message, data.status === 'success' ? 'success' : 'error');
-                refreshStatus();
+                addLog(data.status === 'success' ? '🚫 تم إيقاف التداول' : '❌ ' + data.message, data.status === 'success' ? 'success' : 'error');
+                setTimeout(() => location.reload(), 500);
             } catch (e) {
-                addLog('خطأ في الاتصال: ' + e.message, 'error');
+                addLog('❌ خطأ: ' + e.message, 'error');
             }
         }
         
         async function sendSignal(e) {
             e.preventDefault();
-            const form = e.target;
             const data = {
-                asset: form.asset.value,
-                direction: form.direction.value,
-                amount: parseFloat(form.amount.value),
-                duration: parseInt(form.duration.value)
+                asset: document.getElementById('asset').value,
+                direction: document.getElementById('direction').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                duration: parseInt(document.getElementById('duration').value)
             };
             
             try {
@@ -408,55 +528,23 @@ HTML_TEMPLATE = '''
                 });
                 const result = await response.json();
                 if (result.status === 'success') {
-                    addLog('تم إرسال الإشارة: ' + data.asset + ' ' + data.direction + ' $' + data.amount, 'success');
+                    addLog('📨 إشارة مُنفذة: ' + data.asset + ' ' + data.direction + ' $' + data.amount, 'signal');
                 } else {
-                    addLog('خطأ: ' + result.message, 'error');
-                }
-                refreshStatus();
-            } catch (e) {
-                addLog('خطأ في الاتصال: ' + e.message, 'error');
-            }
-        }
-        
-        async function refreshStatus() {
-            try {
-                const response = await fetch('/status');
-                const data = await response.json();
-                if (data.status !== 'error') {
-                    location.reload();
+                    addLog('❌ خطأ: ' + result.message, 'error');
                 }
             } catch (e) {
-                console.log('Auto-refresh skipped');
+                addLog('❌ خطأ: ' + e.message, 'error');
             }
         }
         
-        function addLog(message, type = 'info') {
-            const container = document.getElementById('logContainer');
-            const now = new Date();
-            const time = now.toLocaleTimeString('ar');
-            
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = '<span class="log-time">' + time + '</span><span class="log-' + type + '">' + message + '</span>';
-            container.insertBefore(entry, container.firstChild);
-            
-            // Keep only last 20 logs
-            while (container.children.length > 20) {
-                container.removeChild(container.lastChild);
-            }
-        }
+        // Auto refresh
+        setInterval(() => { fetch('/status').then(r => r.json()).then(d => { if(d.status !== 'error') location.reload(); }); }, 5000);
         
-        // Auto refresh every 10 seconds
-        setInterval(refreshStatus, 10000);
+        addLog('🔥 لوحة التحكم جاهزة', 'info');
     </script>
 </body>
 </html>
 '''
-
-# Global bot instance
-bot_instance = None
-bot_lock = threading.Lock()
-logs = {"time": datetime.now().strftime("%H:%M:%S"), "message": "مرحباً بك في Volcano Bot!"}
 
 
 class BotManager:
@@ -466,8 +554,8 @@ class BotManager:
         self.bot = None
         self.status = "stopped"
         self.config = {
-            "email": os.getenv("QUOTEX_EMAIL"),
-            "password": os.getenv("QUOTEX_PASSWORD"),
+            "email": os.getenv("QUOTEX_EMAIL", ""),
+            "password": os.getenv("QUOTEX_PASSWORD", ""),
             "demo": True,
             "min_amount": 1.0,
             "max_amount": 100.0,
@@ -476,11 +564,6 @@ class BotManager:
     
     def start_bot(self, config: dict = None):
         """Start the bot"""
-        global bot_instance
-        
-        if self.bot and self.status == "running":
-            return {"status": "error", "message": "Bot is already running"}
-        
         if config:
             self.config.update(config)
         
@@ -488,15 +571,14 @@ class BotManager:
             from volcano_headless import HeadlessQuotexBot
             
             self.bot = HeadlessQuotexBot(
-                email=self.config.get("email"),
-                password=self.config.get("password"),
+                email=self.config.get("email") or None,
+                password=self.config.get("password") or None,
                 auto_trade=self.config.get("auto_trade", True),
                 min_amount=self.config.get("min_amount", 1.0),
                 max_amount=self.config.get("max_amount", 100.0),
                 demo=self.config.get("demo", True)
             )
             
-            # Start in a separate thread
             thread = threading.Thread(target=self._run_bot, daemon=True)
             thread.start()
             
@@ -530,8 +612,12 @@ class BotManager:
                 "status": "stopped",
                 "running": False,
                 "connected": False,
+                "trading_enabled": False,
                 "balance": 0,
-                "trades": []
+                "win_count": 0,
+                "loss_count": 0,
+                "win_rate": 0,
+                "total_trades": 0
             }
         
         try:
@@ -540,12 +626,12 @@ class BotManager:
                 "status": self.status,
                 "running": bot_status.get("running", False),
                 "connected": bot_status.get("connected", False),
+                "trading_enabled": bot_status.get("trading_enabled", False),
                 "balance": bot_status.get("balance", 0),
                 "win_count": bot_status.get("win_count", 0),
                 "loss_count": bot_status.get("loss_count", 0),
                 "win_rate": bot_status.get("win_rate", 0),
-                "total_trades": bot_status.get("total_trades", 0),
-                "trades": self.bot.trade_history[-10:] if self.bot.trade_history else []
+                "total_trades": bot_status.get("total_trades", 0)
             }
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -588,7 +674,8 @@ manager = BotManager()
 def index():
     """Home page with web interface"""
     status = manager.get_status()
-    return render_template_string(HTML_TEMPLATE, status=status, logs=logs)
+    config = manager.config
+    return render_template_string(HTML_TEMPLATE, status=status, config=config, logs=logs)
 
 
 @app.route('/health')
