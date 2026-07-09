@@ -3,7 +3,7 @@ import json
 import sys
 import asyncio
 from pathlib import Path
-from quotexapi.http.navigator import Browser
+from quotexapi.api_http.navigator import Browser
 
 
 class Login(Browser):

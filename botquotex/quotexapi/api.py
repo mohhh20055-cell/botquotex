@@ -11,11 +11,11 @@ import logging
 import platform
 import threading
 from . import global_value
-from .http.login import Login
-from .http.logout import Logout
-from .http.settings import Settings
-from .http.history import GetHistory
-from .http.navigator import Browser
+from .api_http.login import Login
+from .api_http.logout import Logout
+from .api_http.settings import Settings
+from .api_http.history import GetHistory
+from .api_http.navigator import Browser
 from .ws.channels.ssid import Ssid
 from .ws.channels.buy import Buy
 from .ws.channels.candles import GetCandles

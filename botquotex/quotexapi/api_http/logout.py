@@ -1,6 +1,6 @@
 """Module for Quotex http login resource."""
 
-from ..http.resource import Resource
+from ..api_http.resource import Resource
 
 
 class Logout(Resource):

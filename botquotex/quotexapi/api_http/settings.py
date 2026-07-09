@@ -1,4 +1,4 @@
-from ..http.navigator import Browser
+from ..api_http.navigator import Browser
 
 
 class Settings(Browser):
