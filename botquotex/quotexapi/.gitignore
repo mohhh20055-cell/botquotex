@@ -32,6 +32,8 @@ env/
 *.swo
 
 # Settings and credentials
+settings/
+!settings/config.ini.example
 settings/config.ini
 session.json
 *.log
