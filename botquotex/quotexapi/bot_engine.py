@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
 from quotexapi import Quotex
-from strategies import TradingStrategies
+from quotexapi.strategies import TradingStrategies
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

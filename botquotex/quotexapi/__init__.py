@@ -1,5 +1,10 @@
 """A python wrapper for Quotex API."""
 import logging
+from .stable_api import Quotex
+from .strategies import TradingStrategies
+from .bot_engine import QuotexBot
+
+__all__ = ["Quotex", "TradingStrategies", "QuotexBot"]
 
 
 def _prepare_logging():

@@ -1,14 +1,12 @@
 # render.yaml
 services:
   - type: web
-    name: botquotex
+    name: botquotex-api
     runtime: python
-    buildCommand: pip install -r botquotex/quotexapi/requirements.txt
-    startCommand: cd botquotex/quotexapi && gunicorn app:app
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.8
       - key: PIP_NO_CACHE_DIR
         value: 1
-      - key: POETRY_VERSION
-        value: ""  # تعطيل Poetry

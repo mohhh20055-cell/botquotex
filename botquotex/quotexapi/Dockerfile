@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # نسخ باقي المشروع
 COPY . .
 
+# إنشاء مجلد للإعدادات
+RUN mkdir -p settings
+
 # تعيين متغيرات البيئة
 ENV PYTHONUNBUFFERED=1
 ENV PORT=10000
