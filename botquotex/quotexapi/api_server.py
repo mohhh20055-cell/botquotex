@@ -608,8 +608,8 @@ class BotManager:
             thread = threading.Thread(target=self._run_bot, daemon=True)
             thread.start()
             
-            self.status = "running"
-            return {"status": "success", "message": "Bot started"}
+            self.status = "starting"
+            return {"status": "success", "message": "جاري الاتصال..."}
             
         except Exception as e:
             logger.error(f"Error starting bot: {e}")
