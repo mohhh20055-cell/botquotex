@@ -13,8 +13,8 @@ from datetime import datetime
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 
-# Add quotexapi to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add parent directory (botquotex) to path so quotexapi can use relative imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -593,7 +593,7 @@ class BotManager:
             self.config.update(config)
         
         try:
-            from .volcano_headless import HeadlessQuotexBot
+            from volcano_headless import HeadlessQuotexBot
             
             self.bot = HeadlessQuotexBot(
                 email=self.config.get("email") or None,
