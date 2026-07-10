@@ -25,6 +25,11 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logger.error(f"Unhandled exception: {e}")
+    return jsonify({"status": "error", "message": str(e)}), 500
+
 # Global variables
 logs = {"time": datetime.now().strftime("%H:%M:%S"), "message": "Volcano Bot Ready!"}
 
@@ -582,7 +587,7 @@ class BotManager:
             self.config.update(config)
         
         try:
-            from volcano_headless import HeadlessQuotexBot
+            from .volcano_headless import HeadlessQuotexBot
             
             self.bot = HeadlessQuotexBot(
                 email=self.config.get("email") or None,
