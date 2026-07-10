@@ -238,19 +238,19 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         <!-- Status Bar -->
         <div class="status-bar">
             <div class="status-item">
-                <div class="status-dot {{ 'green' if status.get('connected') else 'red' }}"></div>
-                <div>{{ 'متصل' if status.get('connected') else 'غير متصل' }}</div>
+                <div id="status-connected" class="status-dot {{ 'green' if status.get('connected') else 'red' }}"></div>
+                <div id="status-connected-text">{{ 'متصل' if status.get('connected') else 'غير متصل' }}</div>
             </div>
             <div class="status-item">
-                <div class="status-dot {{ 'green' if status.get('running') else 'red' }}"></div>
-                <div>{{ ' працює' if status.get('running') else 'متوقف' }}</div>
+                <div id="status-running" class="status-dot {{ 'green' if status.get('running') else 'red' }}"></div>
+                <div id="status-running-text">{{ ' працює' if status.get('running') else 'متوقف' }}</div>
             </div>
             <div class="status-item">
-                <div class="status-dot {{ 'yellow' if status.get('trading_enabled') else 'orange' }}"></div>
-                <div>{{ 'التداول مفعل' if status.get('trading_enabled') else 'التداول معطل' }}</div>
+                <div id="status-trading" class="status-dot {{ 'yellow' if status.get('trading_enabled') else 'orange' }}"></div>
+                <div id="status-trading-text">{{ 'التداول مفعل' if status.get('trading_enabled') else 'التداول معطل' }}</div>
             </div>
             <div class="status-item">
-                <span style="font-size: 1.5em; font-weight: bold;">${{ "%.2f"|format(status.get('balance', 0)) }}</span>
+                <span id="balance-value" style="font-size: 1.5em; font-weight: bold;">${{ "%.2f"|format(status.get('balance', 0)) }}</span>
                 <div>الرصيد</div>
             </div>
         </div>
@@ -539,8 +539,20 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             }
         }
         
-        // Auto refresh
-        setInterval(() => { fetch('/status').then(r => r.json()).then(d => { if(d.status !== 'error') location.reload(); }); }, 5000);
+        // Auto refresh status only (no page reload)
+        setInterval(() => {
+            fetch('/status').then(r => r.json()).then(d => {
+                if(d.status !== 'error' && d.status !== undefined) {
+                    document.getElementById('status-connected').className = 'status-dot ' + (d.connected ? 'green' : 'red');
+                    document.getElementById('status-connected-text').textContent = d.connected ? 'متصل' : 'غير متصل';
+                    document.getElementById('status-running').className = 'status-dot ' + (d.running ? 'green' : 'red');
+                    document.getElementById('status-running-text').textContent = d.running ? ' працює' : 'متوقف';
+                    document.getElementById('status-trading').className = 'status-dot ' + (d.trading_enabled ? 'yellow' : 'orange');
+                    document.getElementById('status-trading-text').textContent = d.trading_enabled ? 'التداول مفعل' : 'التداول معطل';
+                    if(d.balance) document.getElementById('balance-value').textContent = '$' + d.balance.toFixed(2);
+                }
+            });
+        }, 3000);
         
         addLog('🔥 لوحة التحكم جاهزة', 'info');
     </script>
