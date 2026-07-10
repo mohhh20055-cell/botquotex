@@ -666,12 +666,12 @@ void DrawHistoryRows() {
    }
    ObjectDelete(0, PREFIX + "hist_empty");
    
-   for(int i = 0; i < HIST_VISIBLE_ROWS; i++) {
-      int idx = histScrollOffset + i;
+   for(int rowIdx = 0; rowIdx < HIST_VISIBLE_ROWS; rowIdx++) {
+      int idx = histScrollOffset + rowIdx;
       if(idx >= sigCacheCount) break;
-      string p = (string)i;
-      int rowY = rsy + i * 20;
-      color rowBg = (i % 2 == 0) ? CLR_ROW_A : CLR_ROW_B;
+      string p = (string)rowIdx;
+      int rowY = rsy + rowIdx * 20;
+      color rowBg = (rowIdx % 2 == 0) ? CLR_ROW_A : CLR_ROW_B;
       if(sigCache[idx].sent)
          rowBg = (sigCache[idx].sigType == "CALL") ? C'0,30,18' : C'35,8,15';
       
