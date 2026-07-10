@@ -4,8 +4,8 @@
 //| يرسل الإشارات عبر HTTP POST API                                    |
 //+------------------------------------------------------------------+
 #property copyright "Volcano Bot - Cloud Connected"
-#property version   "15.0"
-#property strict
+#property version   "16.0"
+#property indicator_chart_window
 
 //--- إعدادات البوت
 input string  BotAPI_URL      = "https://botquotex-api-xxxx.onrender.com"; // رابط البوت على Render
@@ -139,13 +139,11 @@ string GetQuotexSymbol(string sym) {
 //| إرسال الإشارة للبوت عبر HTTP POST                                    |
 //+------------------------------------------------------------------+
 bool SendSignalToBot(string symbol, string direction, double amount, int duration) {
-   // التحقق من الاتصال
    if(!apiConnected) {
       if(DebugMode) Print("VB15: ⚠️ API not connected!");
       return false;
    }
    
-   // التحقق من الرابط
    if(StringFind(BotAPI_URL, "xxxx") != -1) {
       if(DebugMode) Print("VB15: ⚠️ Please set valid BotAPI_URL!");
       return false;
@@ -160,15 +158,28 @@ bool SendSignalToBot(string symbol, string direction, double amount, int duratio
    json += "}";
    
    // إعداد HTTP Request
-   string result[];
-   string headers = "Content-Type: application/json";
+   char data[];
+   char result[];
+   string resultHeaders;
+   StringToCharArray(json, data);
    
-   // إرسال الطلب
-   int timeout = 5000; // 5 ثواني
-   int res = WebRequest("POST", BotAPI_URL + "/signal", headers, timeout, json, result);
+   int timeout = 5000;
+   int dataSize = ArraySize(data);
+   
+   // WebRequest POST: method, url, headers, extra_headers, timeout, data[], data_len, result[], result_headers
+   int res = WebRequest(
+      "POST",
+      BotAPI_URL + "/signal",
+      "Content-Type: application/json",
+      NULL,           // extra headers
+      timeout,
+      data,
+      dataSize,
+      result,
+      resultHeaders
+   );
    
    if(res == -1) {
-      // خطأ في الشبكة
       int err = GetLastError();
       if(DebugMode) Print("VB15: ❌ Network error: ", err);
       UpdateApiStatus(false);
@@ -176,11 +187,9 @@ bool SendSignalToBot(string symbol, string direction, double amount, int duratio
    }
    
    if(res == 200 || res == 201) {
-      // نجاح
       if(DebugMode) Print("VB15: ✅ Signal sent! Response: ", res);
       return true;
    } else {
-      // خطأ HTTP
       if(DebugMode) Print("VB15: ❌ HTTP error: ", res);
       return false;
    }
@@ -195,11 +204,22 @@ bool TestBotConnection() {
       return false;
    }
    
-   string result[];
-   string headers = "Content-Type: application/json";
+   char data[];
+   char result[];
+   string resultHeaders;
    
    int timeout = 5000;
-   int res = WebRequest("GET", BotAPI_URL + "/health", headers, timeout, result);
+   
+   // WebRequest GET: method, url, headers, timeout, data[], result[], result_headers
+   int res = WebRequest(
+      "GET",
+      BotAPI_URL + "/health",
+      "Content-Type: application/json",
+      timeout,
+      data,
+      result,
+      resultHeaders
+   );
    
    if(res == 200) {
       apiConnected = true;
