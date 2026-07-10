@@ -647,15 +647,15 @@ void DrawHistoryRows() {
    int hy = by + 45 + 30 + 34 + 85 + 90 + 42 + 30;
    int rsy = hy + 22 + 16 + 2;
    
-   for(int r = 0; r < HIST_VISIBLE_ROWS; r++) {
-      string p = (string)r;
-      ObjectDelete(0, PREFIX + "rw_bg_" + p);
-      ObjectDelete(0, PREFIX + "rw_new_" + p);
-      ObjectDelete(0, PREFIX + "rw_time_" + p);
-      ObjectDelete(0, PREFIX + "rw_side_" + p);
-      ObjectDelete(0, PREFIX + "rw_sym_" + p);
-      ObjectDelete(0, PREFIX + "rw_buf_" + p);
-      ObjectDelete(0, PREFIX + "rw_stat_" + p);
+   for(int i = 0; i < HIST_VISIBLE_ROWS; i++) {
+      string idxStr = (string)i;
+      ObjectDelete(0, PREFIX + "rw_bg_" + idxStr);
+      ObjectDelete(0, PREFIX + "rw_new_" + idxStr);
+      ObjectDelete(0, PREFIX + "rw_time_" + idxStr);
+      ObjectDelete(0, PREFIX + "rw_side_" + idxStr);
+      ObjectDelete(0, PREFIX + "rw_sym_" + idxStr);
+      ObjectDelete(0, PREFIX + "rw_buf_" + idxStr);
+      ObjectDelete(0, PREFIX + "rw_stat_" + idxStr);
    }
    
    if(sigCacheCount == 0) {
@@ -666,12 +666,12 @@ void DrawHistoryRows() {
    }
    ObjectDelete(0, PREFIX + "hist_empty");
    
-   for(int r = 0; r < HIST_VISIBLE_ROWS; r++) {
-      int idx = histScrollOffset + r;
+   for(int i = 0; i < HIST_VISIBLE_ROWS; i++) {
+      int idx = histScrollOffset + i;
       if(idx >= sigCacheCount) break;
-      string p = (string)r;
-      int rowY = rsy + r * 20;
-      color rowBg = (r % 2 == 0) ? CLR_ROW_A : CLR_ROW_B;
+      string p = (string)i;
+      int rowY = rsy + i * 20;
+      color rowBg = (i % 2 == 0) ? CLR_ROW_A : CLR_ROW_B;
       if(sigCache[idx].sent)
          rowBg = (sigCache[idx].sigType == "CALL") ? C'0,30,18' : C'35,8,15';
       
