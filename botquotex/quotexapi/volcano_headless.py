@@ -6,7 +6,11 @@ Volcano Profit - Headless Trading Bot (API/CLI VERSION)
 """
 
 import sys
+import os
 import threading
+
+# Add parent directory to sys.path so quotexapi can be found
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import json
 import time
 import asyncio
