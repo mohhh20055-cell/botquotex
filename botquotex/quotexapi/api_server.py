@@ -476,7 +476,13 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         
         async function startBot() {
             try {
-                const response = await fetch('/start', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const response = await fetch('/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
                 const data = await response.json();
                 addLog(data.status === 'success' ? '✅ تم تشغيل البوت' : '❌ ' + data.message, data.status === 'success' ? 'success' : 'error');
                 setTimeout(() => location.reload(), 1000);
