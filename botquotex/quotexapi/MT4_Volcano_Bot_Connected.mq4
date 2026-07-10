@@ -160,19 +160,12 @@ bool SendSignalToBot(string symbol, string direction, double amount, int duratio
    json += "}";
    
    // إعداد HTTP Request
-   char result[];
+   string result[];
    string headers = "Content-Type: application/json";
    
-   // إرسال الطلب - استخدام string للبيانات
+   // إرسال الطلب
    int timeout = 5000; // 5 ثواني
-   int res = WebRequest(
-      "POST",                            // method
-      BotAPI_URL + "/signal",           // url
-      headers,                          // headers
-      timeout,                          // timeout
-      json,                             // data (string)
-      result                            // result
-   );
+   int res = WebRequest("POST", BotAPI_URL + "/signal", headers, timeout, json, result);
    
    if(res == -1) {
       // خطأ في الشبكة
@@ -202,17 +195,11 @@ bool TestBotConnection() {
       return false;
    }
    
-   char result[];
+   string result[];
    string headers = "Content-Type: application/json";
    
    int timeout = 5000;
-   int res = WebRequest(
-      "GET",                             // method
-      BotAPI_URL + "/health",            // url
-      headers,                           // headers
-      timeout,                           // timeout
-      result                            // result
-   );
+   int res = WebRequest("GET", BotAPI_URL + "/health", headers, timeout, result);
    
    if(res == 200) {
       apiConnected = true;
