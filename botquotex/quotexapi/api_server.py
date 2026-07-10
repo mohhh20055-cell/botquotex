@@ -476,7 +476,7 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         
         async function startBot() {
             try {
-                const response = await fetch('/start', { method: 'POST' });
+                const response = await fetch('/start', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
                 const data = await response.json();
                 addLog(data.status === 'success' ? '✅ تم تشغيل البوت' : '❌ ' + data.message, data.status === 'success' ? 'success' : 'error');
                 setTimeout(() => location.reload(), 1000);
@@ -487,7 +487,7 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         
         async function stopBot() {
             try {
-                const response = await fetch('/stop', { method: 'POST' });
+                const response = await fetch('/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
                 const data = await response.json();
                 addLog(data.status === 'success' ? '⏹️ تم إيقاف البوت' : '❌ ' + data.message, data.status === 'success' ? 'success' : 'error');
                 setTimeout(() => location.reload(), 1000);
@@ -498,7 +498,7 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         
         async function enableTrading() {
             try {
-                const response = await fetch('/enable', { method: 'POST' });
+                const response = await fetch('/enable', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
                 const data = await response.json();
                 addLog(data.status === 'success' ? '✅ تم تفعيل التداول' : '❌ ' + data.message, data.status === 'success' ? 'success' : 'error');
                 setTimeout(() => location.reload(), 500);
@@ -509,7 +509,7 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         
         async function disableTrading() {
             try {
-                const response = await fetch('/disable', { method: 'POST' });
+                const response = await fetch('/disable', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
                 const data = await response.json();
                 addLog(data.status === 'success' ? '🚫 تم إيقاف التداول' : '❌ ' + data.message, data.status === 'success' ? 'success' : 'error');
                 setTimeout(() => location.reload(), 500);
