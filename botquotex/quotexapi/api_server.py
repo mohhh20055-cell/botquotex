@@ -275,6 +275,7 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                     </div>
                     <div class="btn-group">
                         <button type="submit" class="btn btn-connect">💾 حفظ البيانات</button>
+                        <button type="button" class="btn btn-connect" onclick="startBot()">🔑 تسجيل الدخول</button>
                     </div>
                 </form>
                 <div class="alert-box alert-warning">
