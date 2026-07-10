@@ -54,10 +54,13 @@ import httpx
 try:
     from quotexapi.stable_api import Quotex
     HAS_QUOTEX = True
-except ImportError:
+    logger.info("Quotex API imported successfully")
+except ImportError as e:
+    import traceback
     HAS_QUOTEX = False
     Quotex = None
-    logger.warning("Quotex API not available")
+    logger.error(f"Quotex API import failed: {e}")
+    logger.error(f"Traceback: {traceback.format_exc()}")
 
 # Configuration
 CONFIG_FILE = "mt4_bot_config.json"
