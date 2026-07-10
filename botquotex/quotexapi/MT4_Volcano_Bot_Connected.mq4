@@ -160,22 +160,18 @@ bool SendSignalToBot(string symbol, string direction, double amount, int duratio
    json += "}";
    
    // إعداد HTTP Request
-   char postData[];
    char result[];
    string headers = "Content-Type: application/json";
    
-   // تحويل JSON للبايتات
-   StringToCharArray(json, postData);
-   
-   // إرسال الطلب
+   // إرسال الطلب - استخدام string للبيانات
    int timeout = 5000; // 5 ثواني
    int res = WebRequest(
-      "POST", 
-      BotAPI_URL + "/signal",
-      headers,
-      timeout,
-      postData,
-      result
+      "POST",                            // method
+      BotAPI_URL + "/signal",           // url
+      headers,                          // headers
+      timeout,                          // timeout
+      json,                             // data (string)
+      result                            // result
    );
    
    if(res == -1) {
@@ -188,7 +184,7 @@ bool SendSignalToBot(string symbol, string direction, double amount, int duratio
    
    if(res == 200 || res == 201) {
       // نجاح
-      if(DebugMode) Print("VB15: ✅ Signal sent successfully! Response code: ", res);
+      if(DebugMode) Print("VB15: ✅ Signal sent! Response: ", res);
       return true;
    } else {
       // خطأ HTTP
@@ -211,11 +207,11 @@ bool TestBotConnection() {
    
    int timeout = 5000;
    int res = WebRequest(
-      "GET", 
-      BotAPI_URL + "/health",
-      headers,
-      timeout,
-      result
+      "GET",                             // method
+      BotAPI_URL + "/health",            // url
+      headers,                           // headers
+      timeout,                           // timeout
+      result                            // result
    );
    
    if(res == 200) {
