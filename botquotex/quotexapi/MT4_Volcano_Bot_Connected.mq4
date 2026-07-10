@@ -108,7 +108,10 @@ string currentMenuFor = "";
 //| تحويل اسم الأداة لـ Quotex                                           |
 //+------------------------------------------------------------------+
 string GetQuotexSymbol(string sym) {
-   sym = StringTrim(sym);
+   // StringTrim doesn't exist in MQL4, use manual trim
+   while(StringGetCharacter(sym, 0) == 32) sym = StringSubstr(sym, 1);
+   while(StringGetCharacter(sym, StringLen(sym)-1) == 32) sym = StringSubstr(sym, 0, StringLen(sym)-1);
+   
    if(sym == "EURUSD") return "EUR/USD";
    if(sym == "GBPUSD") return "GBP/USD";
    if(sym == "USDJPY") return "USD/JPY";
@@ -159,17 +162,21 @@ bool SendSignalToBot(string symbol, string direction, double amount, int duratio
    // إعداد HTTP Request
    char postData[];
    char result[];
-   string headers = "Content-Type: application/json\r\n";
-   if(BotAPI_Key != "") {
-      headers += "Authorization: Bearer " + BotAPI_Key + "\r\n";
-   }
+   string headers = "Content-Type: application/json";
    
    // تحويل JSON للبايتات
    StringToCharArray(json, postData);
    
    // إرسال الطلب
    int timeout = 5000; // 5 ثواني
-   int res = WebRequest("POST", BotAPI_URL + "/signal", headers, timeout, postData, result);
+   int res = WebRequest(
+      "POST", 
+      BotAPI_URL + "/signal",
+      headers,
+      timeout,
+      postData,
+      result
+   );
    
    if(res == -1) {
       // خطأ في الشبكة
@@ -186,8 +193,6 @@ bool SendSignalToBot(string symbol, string direction, double amount, int duratio
    } else {
       // خطأ HTTP
       if(DebugMode) Print("VB15: ❌ HTTP error: ", res);
-      string responseText = CharArrayToString(result);
-      if(DebugMode) Print("VB15: Response: ", responseText);
       return false;
    }
 }
@@ -202,13 +207,16 @@ bool TestBotConnection() {
    }
    
    char result[];
-   string headers = "Content-Type: application/json\r\n";
-   if(BotAPI_Key != "") {
-      headers += "Authorization: Bearer " + BotAPI_Key + "\r\n";
-   }
+   string headers = "Content-Type: application/json";
    
    int timeout = 5000;
-   int res = WebRequest("GET", BotAPI_URL + "/health", headers, timeout, result);
+   int res = WebRequest(
+      "GET", 
+      BotAPI_URL + "/health",
+      headers,
+      timeout,
+      result
+   );
    
    if(res == 200) {
       apiConnected = true;
@@ -369,7 +377,7 @@ int OnInit() {
    }
    
    LastCandleTime = Time[0];
-   LastPeriodSec  = GetPeriodSeconds();
+   LastPeriodSec  = Period() * 60;
    ResetBarState();
    
    BuildSignalCache();
@@ -411,7 +419,7 @@ void OnTick() {
       Print("VB15: 🕯️ NEW CANDLE @ ", TimeToStr(curCandle, TIME_SECONDS));
       
       LastCandleTime = curCandle;
-      LastPeriodSec  = GetPeriodSeconds();
+      LastPeriodSec  = Period() * 60;
       ResetBarState();
       
       UpdateStatusLabel("⏳ Monitoring...", CLR_TEXT_YEL);
@@ -994,7 +1002,7 @@ void OnChartEvent(const int id, const long &lparam, const double &dparam, const 
       
       if(isScanning) {
          LastCandleTime = Time[0];
-         LastPeriodSec = GetPeriodSeconds();
+         LastPeriodSec = Period() * 60;
          ResetBarState();
          Print("VB15: 🟢 SCAN STARTED - Signals will be sent to bot!");
          UpdateStatusLabel("🟢 SCANNING - Bot: " + BotAPI_URL, CLR_SCAN_ON);
